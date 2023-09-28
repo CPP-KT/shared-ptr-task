@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(shared_ptr)
+project(shared-ptr)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -7,8 +7,31 @@ find_package(GTest REQUIRED)
 
 add_executable(tests tests.cpp tests-extra/test-object.cpp)
 
-if(NOT MSVC)
-  target_compile_options(tests PRIVATE -Wall -Wextra -Wshadow=compatible-local -Wno-sign-compare -pedantic)
+if(MSVC)
+  target_compile_options(tests PRIVATE /W4 /permissive-)
+  if(TREAT_WARNINGS_AS_ERRORS)
+    target_compile_options(tests PRIVATE /WX)
+  endif()
+else()
+  target_compile_options(tests PRIVATE -Wall -pedantic -Wextra -Wno-sign-compare)
+  target_compile_options(tests PRIVATE -Wold-style-cast -Wextra-semi -Woverloaded-virtual -Wzero-as-null-pointer-constant)
+  if(TREAT_WARNINGS_AS_ERRORS)
+    target_compile_options(tests PRIVATE -Werror -pedantic-errors)
+  endif()
+  target_compile_options(tests PRIVATE -Wno-self-move)
+endif()
+
+# Compiler specific warnings
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  target_compile_options(tests PRIVATE -Wshadow=compatible-local)
+  target_compile_options(tests PRIVATE -Wduplicated-branches)
+  target_compile_options(tests PRIVATE -Wduplicated-cond)
+  # Disabled due to GCC bug
+  # target_compile_options(tests PRIVATE -Wnull-dereference)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  target_compile_options(tests PRIVATE -Wshadow-uncaptured-local)
+  target_compile_options(tests PRIVATE -Wloop-analysis)
+  target_compile_options(tests PRIVATE -Wno-self-assign-overloaded)
 endif()
 
 option(USE_SANITIZERS "Enable to build with undefined,leak and address sanitizers" OFF)
@@ -31,9 +54,6 @@ endif()
 
 target_link_libraries(tests GTest::gtest GTest::gtest_main)
 
-
 if(ENABLE_SLOW_TEST)
-  target_sources(tests PRIVATE
-      advanced-tests.cpp)
+  target_sources(tests PRIVATE advanced-tests.cpp)
 endif()
-
