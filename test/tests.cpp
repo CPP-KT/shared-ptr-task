@@ -1,5 +1,5 @@
 #include "shared-ptr.h"
-#include "tests-extra/test-object.h"
+#include "test-object.h"
 
 #include <gtest/gtest.h>
 
