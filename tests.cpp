@@ -1,5 +1,6 @@
 #include "shared-ptr.h"
 #include "tests-extra/test-object.h"
+
 #include <gtest/gtest.h>
 
 TEST(shared_ptr_testing, default_ctor) {
@@ -52,7 +53,7 @@ TEST(shared_ptr_testing, copy_ctor_nullptr) {
 
 TEST(shared_ptr_testing, const_dereferencing) {
   test_object::no_new_instances_guard g;
-  shared_ptr<test_object> const p(new test_object(42));
+  const shared_ptr<test_object> p(new test_object(42));
   EXPECT_EQ(42, *p);
   EXPECT_EQ(42, p->operator int());
 }
@@ -132,7 +133,7 @@ TEST(shared_ptr_testing, assignment_operator_nullptr) {
 TEST(shared_ptr_testing, assignment_operator_const) {
   test_object::no_new_instances_guard g;
   shared_ptr<test_object> p(new test_object(42));
-  shared_ptr<test_object> const q(new test_object(43));
+  const shared_ptr<test_object> q(new test_object(43));
   p = q;
   EXPECT_EQ(43, *p);
   EXPECT_TRUE(p == q);
@@ -250,6 +251,7 @@ namespace {
 size_t new_calls = 0;
 size_t delete_calls = 0;
 } // namespace
+
 void* operator new(std::size_t count) {
   new_calls += 1;
   return malloc(count);

@@ -1,5 +1,6 @@
 #include "shared-ptr.h"
 #include "tests-extra/test-object.h"
+
 #include <gtest/gtest.h>
 
 template <typename T>
@@ -204,10 +205,7 @@ TEST(shared_ptr_testing, weak_ptr_move_assignment_operator_self_nullptr) {
 TEST(shared_ptr_testing, custom_deleter) {
   test_object::no_new_instances_guard g;
   bool deleted = false;
-  {
-    shared_ptr<test_object> p(new test_object(42),
-                              custom_deleter<test_object>(&deleted));
-  }
+  { shared_ptr<test_object> p(new test_object(42), custom_deleter<test_object>(&deleted)); }
   EXPECT_TRUE(deleted);
 }
 
@@ -249,12 +247,13 @@ TEST(shared_ptr_testing, comparison_with_nullptr) {
 
 TEST(shared_ptr_testing, conversions_const) {
   shared_ptr<test_object> p(new test_object(42));
-  shared_ptr<test_object const> q = p;
+  shared_ptr<const test_object> q = p;
   EXPECT_EQ(42, *q);
 }
 
 TEST(shared_ptr_testing, conversions_inheritance) {
   struct base {};
+
   struct derived : base {};
 
   shared_ptr<derived> d(new derived());
