@@ -6,8 +6,8 @@ template <typename T>
 class shared_ptr {
 public:
   shared_ptr() noexcept;
-  shared_ptr(nullptr_t) noexcept;
-  shared_ptr(T* ptr_);
+  shared_ptr(std::nullptr_t) noexcept;
+  shared_ptr(T* ptr);
 
   shared_ptr(const shared_ptr& other) noexcept;
   shared_ptr(shared_ptr&& other) noexcept;
