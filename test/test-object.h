@@ -6,7 +6,7 @@ struct test_object {
   struct no_new_instances_guard;
 
   test_object() = delete;
-  test_object(int data);
+  explicit test_object(int data);
   test_object(const test_object& other);
   ~test_object();
 

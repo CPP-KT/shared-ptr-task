@@ -1,5 +1,5 @@
 #include "shared-ptr.h"
-#include "test-object.h"
+#include "test-classes.h"
 
 #include <gtest/gtest.h>
 
@@ -10,27 +10,175 @@
 #endif
 
 #ifndef DISABLE_ALLOCATION_TESTS
+
 namespace {
-std::size_t new_calls = 0;
-std::size_t delete_calls = 0;
+
+struct injected_fault : std::runtime_error {
+  using runtime_error::runtime_error;
+};
+
+bool should_inject_fault();
+
+void* injected_allocate(size_t count);
+void injected_deallocate(void* ptr);
+
+struct fault_injection_disable {
+  fault_injection_disable();
+
+  fault_injection_disable(const fault_injection_disable&) = delete;
+  fault_injection_disable& operator=(const fault_injection_disable&) = delete;
+
+  ~fault_injection_disable();
+
+private:
+  bool was_disabled;
+};
+
+template <typename T>
+struct fault_injection_allocator {
+  using value_type = T;
+
+  fault_injection_allocator() = default;
+
+  T* allocate(size_t count) {
+    return static_cast<T*>(injected_allocate(count * sizeof(T)));
+  }
+
+  void deallocate(void* ptr, size_t) {
+    injected_deallocate(ptr);
+  }
+};
+
+struct fault_injection_context {
+  std::vector<size_t, fault_injection_allocator<size_t>> skip_ranges;
+  size_t error_index = 0;
+  size_t skip_index = 0;
+  bool fault_registered = false;
+};
+
+thread_local bool disabled = false;
+thread_local fault_injection_context* context = nullptr;
+
+thread_local std::size_t new_calls = 0;
+thread_local std::size_t delete_calls = 0;
+
+void* injected_allocate(size_t count) {
+  if (!disabled) {
+    ++new_calls;
+  }
+
+  if (should_inject_fault()) {
+    throw std::bad_alloc();
+  }
+
+  void* ptr = std::malloc(count);
+  assert(ptr);
+  return ptr;
+}
+
+void injected_deallocate(void* ptr) {
+  if (!disabled) {
+    ++delete_calls;
+  }
+  std::free(ptr);
+}
+
+bool should_inject_fault() {
+  if (!context) {
+    return false;
+  }
+
+  if (disabled) {
+    return false;
+  }
+
+  assert(context->error_index <= context->skip_ranges.size());
+  if (context->error_index == context->skip_ranges.size()) {
+    fault_injection_disable dg;
+    ++context->error_index;
+    context->skip_ranges.push_back(0);
+    context->fault_registered = true;
+    return true;
+  }
+
+  assert(context->skip_index <= context->skip_ranges[context->error_index]);
+
+  if (context->skip_index == context->skip_ranges[context->error_index]) {
+    ++context->error_index;
+    context->skip_index = 0;
+    context->fault_registered = true;
+    return true;
+  }
+
+  ++context->skip_index;
+  return false;
+}
+
+void fault_injection_point() {
+  if (should_inject_fault()) {
+    fault_injection_disable dg;
+    throw injected_fault("injected fault");
+  }
+}
+
+void faulty_run(const std::function<void()>& f) {
+  assert(!context);
+  fault_injection_context ctx;
+  context = &ctx;
+  for (;;) {
+    try {
+      f();
+    } catch (...) {
+      fault_injection_disable dg;
+      ctx.skip_ranges.resize(ctx.error_index);
+      ++ctx.skip_ranges.back();
+      ctx.error_index = 0;
+      ctx.skip_index = 0;
+      assert(ctx.fault_registered);
+      ctx.fault_registered = false;
+      continue;
+    }
+    assert(!ctx.fault_registered);
+    break;
+  }
+  context = nullptr;
+}
+
+fault_injection_disable::fault_injection_disable() : was_disabled(disabled) {
+  disabled = true;
+}
+
+fault_injection_disable::~fault_injection_disable() {
+  disabled = was_disabled;
+}
+
 } // namespace
 
 void* operator new(std::size_t count) {
-  new_calls += 1;
-  return std::malloc(count);
+  return injected_allocate(count);
+}
+
+void* operator new[](std::size_t count) {
+  return injected_allocate(count);
 }
 
 void operator delete(void* ptr) noexcept {
-  delete_calls += 1;
-  std::free(ptr);
+  injected_deallocate(ptr);
+}
+
+void operator delete[](void* ptr) noexcept {
+  injected_deallocate(ptr);
 }
 
 void operator delete(void* ptr, std::size_t) noexcept {
-  delete_calls += 1;
-  std::free(ptr);
+  injected_deallocate(ptr);
 }
 
-TEST(allocation_test, weak_ptr_allocations) {
+void operator delete[](void* ptr, std::size_t) noexcept {
+  injected_deallocate(ptr);
+}
+
+TEST(allocation_calls_test, weak_ptr_allocations) {
   std::size_t new_calls_before = new_calls;
   std::size_t delete_calls_before = delete_calls;
   int* i_p = new int(1337);
@@ -46,7 +194,7 @@ TEST(allocation_test, weak_ptr_allocations) {
   EXPECT_FALSE(w_p.lock());
 }
 
-TEST(allocation_test, make_shared_weak_ptr_allocations) {
+TEST(allocation_calls_test, make_shared_weak_ptr_allocations) {
   size_t new_calls_before = new_calls;
   size_t delete_calls_before = delete_calls;
   weak_ptr<int> w_p;
@@ -61,7 +209,7 @@ TEST(allocation_test, make_shared_weak_ptr_allocations) {
   EXPECT_FALSE(w_p.lock());
 }
 
-TEST(allocation_test, allocations) {
+TEST(allocation_calls_test, allocations) {
   size_t new_calls_before = new_calls;
   size_t delete_calls_before = delete_calls;
   int* i_p = new int(1337);
@@ -75,7 +223,7 @@ TEST(allocation_test, allocations) {
   EXPECT_EQ(delete_calls_after - delete_calls_before, 2);
 }
 
-TEST(allocation_test, make_shared_allocations) {
+TEST(allocation_calls_test, make_shared_allocations) {
   size_t new_calls_before = new_calls;
   size_t delete_calls_before = delete_calls;
   {
@@ -87,4 +235,45 @@ TEST(allocation_test, make_shared_allocations) {
   EXPECT_EQ(new_calls_after - new_calls_before, 1);
   EXPECT_EQ(delete_calls_after - delete_calls_before, 1);
 }
+
+TEST(fault_injection_test, pointer_ctor) {
+  faulty_run([] {
+    bool deleted = false;
+    destruction_tracker* i_p = new destruction_tracker(&deleted);
+    try {
+      shared_ptr<destruction_tracker> s_p(i_p);
+    } catch (...) {
+      fault_injection_disable dg;
+      EXPECT_TRUE(deleted);
+      throw;
+    }
+  });
+}
+
+TEST(fault_injection_test, pointer_ctor_with_custom_deleter) {
+  faulty_run([] {
+    bool deleted = false;
+    int* i_p = new int(42);
+    try {
+      shared_ptr<int> s_p(i_p, tracking_deleter<int>(&deleted));
+    } catch (...) {
+      fault_injection_disable dg;
+      EXPECT_TRUE(deleted);
+      throw;
+    }
+  });
+}
+
+TEST(fault_injection_test, make_shared) {
+  struct test_object {
+    explicit test_object(int value) : value(value) {
+      fault_injection_point();
+    }
+
+    int value;
+  };
+
+  faulty_run([] { shared_ptr<test_object> p = make_shared<test_object>(42); });
+}
+
 #endif

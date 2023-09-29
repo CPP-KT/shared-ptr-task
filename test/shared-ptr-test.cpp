@@ -1,6 +1,6 @@
 #include "shared-ptr.h"
 
-#include "test-object.h"
+#include "test-classes.h"
 
 #include <gtest/gtest.h>
 
@@ -226,54 +226,24 @@ TEST_F(shared_ptr_test, make_shared_weak_ptr) {
   instances_guard.expect_no_instances();
 }
 
-namespace {
-
-template <typename T>
-struct custom_deleter {
-  explicit custom_deleter(bool* deleted) : deleted(deleted) {}
-
-  void operator()(T* object) {
-    *deleted = true;
-    delete object;
-  }
-
-private:
-  bool* deleted;
-};
-
-struct dtor_tracker_base {};
-
-struct dtor_tracker : dtor_tracker_base {
-  explicit dtor_tracker(bool* deleted) : deleted(deleted) {}
-
-  ~dtor_tracker() {
-    *deleted = true;
-  }
-
-private:
-  bool* deleted;
-};
-
-} // namespace
-
 TEST_F(shared_ptr_test, ptr_ctor_inheritance) {
   bool deleted = false;
-  { shared_ptr<dtor_tracker_base> p(new dtor_tracker(&deleted)); }
+  { shared_ptr<destruction_tracker_base> p(new destruction_tracker(&deleted)); }
   EXPECT_TRUE(deleted);
 }
 
 TEST_F(shared_ptr_test, reset_ptr_inheritance) {
   bool deleted = false;
   {
-    shared_ptr<dtor_tracker_base> p;
-    p.reset(new dtor_tracker(&deleted));
+    shared_ptr<destruction_tracker_base> p;
+    p.reset(new destruction_tracker(&deleted));
   }
   EXPECT_TRUE(deleted);
 }
 
 TEST_F(shared_ptr_test, custom_deleter) {
   bool deleted = false;
-  { shared_ptr<test_object> p(new test_object(42), custom_deleter<test_object>(&deleted)); }
+  { shared_ptr<test_object> p(new test_object(42), tracking_deleter<test_object>(&deleted)); }
   EXPECT_TRUE(deleted);
 }
 
@@ -281,7 +251,7 @@ TEST_F(shared_ptr_test, custom_deleter_reset) {
   bool deleted;
   {
     shared_ptr<test_object> p;
-    p.reset(new test_object(42), custom_deleter<test_object>(&deleted));
+    p.reset(new test_object(42), tracking_deleter<test_object>(&deleted));
   }
   EXPECT_TRUE(deleted);
 }
