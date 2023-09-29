@@ -35,25 +35,6 @@ TEST_F(shared_ptr_test, ptr_ctor_non_empty_nullptr) {
   EXPECT_EQ(1, p.use_count());
 }
 
-TEST_F(shared_ptr_test, copy_ctor) {
-  shared_ptr<test_object> p(new test_object(42));
-  EXPECT_EQ(1, p.use_count());
-  shared_ptr<test_object> q = p;
-  EXPECT_TRUE(static_cast<bool>(p));
-  EXPECT_TRUE(static_cast<bool>(q));
-  EXPECT_TRUE(p == q);
-  EXPECT_EQ(42, *p);
-  EXPECT_EQ(42, *q);
-  EXPECT_EQ(2, q.use_count());
-}
-
-TEST_F(shared_ptr_test, copy_ctor_nullptr) {
-  shared_ptr<test_object> p;
-  shared_ptr<test_object> q = p;
-  EXPECT_FALSE(static_cast<bool>(p));
-  EXPECT_FALSE(static_cast<bool>(q));
-}
-
 TEST_F(shared_ptr_test, const_dereferencing) {
   const shared_ptr<test_object> p(new test_object(42));
   EXPECT_EQ(42, *p);
@@ -81,6 +62,25 @@ TEST_F(shared_ptr_test, reset_ptr) {
   EXPECT_EQ(43, *q);
 }
 
+TEST_F(shared_ptr_test, copy_ctor) {
+  shared_ptr<test_object> p(new test_object(42));
+  EXPECT_EQ(1, p.use_count());
+  shared_ptr<test_object> q = p;
+  EXPECT_TRUE(static_cast<bool>(p));
+  EXPECT_TRUE(static_cast<bool>(q));
+  EXPECT_TRUE(p == q);
+  EXPECT_EQ(42, *p);
+  EXPECT_EQ(42, *q);
+  EXPECT_EQ(2, q.use_count());
+}
+
+TEST_F(shared_ptr_test, copy_ctor_nullptr) {
+  shared_ptr<test_object> p;
+  shared_ptr<test_object> q = p;
+  EXPECT_FALSE(static_cast<bool>(p));
+  EXPECT_FALSE(static_cast<bool>(q));
+}
+
 TEST_F(shared_ptr_test, move_ctor) {
   shared_ptr<test_object> p(new test_object(42));
   shared_ptr<test_object> q = std::move(p);
@@ -96,7 +96,7 @@ TEST_F(shared_ptr_test, move_ctor_nullptr) {
   EXPECT_FALSE(static_cast<bool>(q));
 }
 
-TEST_F(shared_ptr_test, assignment_operator) {
+TEST_F(shared_ptr_test, copy_assignment_operator) {
   shared_ptr<test_object> p(new test_object(42));
   shared_ptr<test_object> q(new test_object(43));
   p = q;
@@ -104,14 +104,14 @@ TEST_F(shared_ptr_test, assignment_operator) {
   EXPECT_TRUE(p == q);
 }
 
-TEST_F(shared_ptr_test, assignment_operator_from_nullptr) {
+TEST_F(shared_ptr_test, copy_assignment_operator_from_nullptr) {
   shared_ptr<test_object> p(new test_object(42));
   shared_ptr<test_object> q;
   p = q;
   EXPECT_FALSE(static_cast<bool>(p));
 }
 
-TEST_F(shared_ptr_test, assignment_operator_to_nullptr) {
+TEST_F(shared_ptr_test, copy_assignment_operator_to_nullptr) {
   shared_ptr<test_object> p;
   shared_ptr<test_object> q(new test_object(43));
   p = q;
@@ -119,28 +119,20 @@ TEST_F(shared_ptr_test, assignment_operator_to_nullptr) {
   EXPECT_TRUE(p == q);
 }
 
-TEST_F(shared_ptr_test, assignment_operator_nullptr) {
+TEST_F(shared_ptr_test, copy_assignment_operator_nullptr) {
   shared_ptr<test_object> p;
   shared_ptr<test_object> q;
   p = q;
   EXPECT_FALSE(static_cast<bool>(p));
 }
 
-TEST_F(shared_ptr_test, assignment_operator_const) {
-  shared_ptr<test_object> p(new test_object(42));
-  const shared_ptr<test_object> q(new test_object(43));
-  p = q;
-  EXPECT_EQ(43, *p);
-  EXPECT_TRUE(p == q);
-}
-
-TEST_F(shared_ptr_test, assignment_operator_self) {
+TEST_F(shared_ptr_test, copy_assignment_operator_self) {
   shared_ptr<test_object> p(new test_object(42));
   p = p;
   EXPECT_EQ(42, *p);
 }
 
-TEST_F(shared_ptr_test, assignment_operator_self_nullptr) {
+TEST_F(shared_ptr_test, copy_assignment_operator_self_nullptr) {
   shared_ptr<test_object> p;
   p = p;
   EXPECT_FALSE(static_cast<bool>(p));
@@ -277,6 +269,7 @@ TEST_F(shared_ptr_test, aliasing_ctor) {
   shared_ptr<int> q(p, &x);
   EXPECT_EQ(2, p.use_count());
   EXPECT_EQ(2, q.use_count());
+  EXPECT_EQ(&x, q.get());
 }
 
 TEST_F(shared_ptr_test, aliasing_ctor_nullptr_non_empty) {
@@ -284,23 +277,149 @@ TEST_F(shared_ptr_test, aliasing_ctor_nullptr_non_empty) {
   shared_ptr<int> q(p, nullptr);
   EXPECT_EQ(2, p.use_count());
   EXPECT_EQ(2, q.use_count());
-  EXPECT_TRUE(q.get() == nullptr);
+  EXPECT_EQ(nullptr, q.get());
 }
 
-TEST_F(shared_ptr_test, conversions_const) {
+TEST_F(shared_ptr_test, aliasing_move_ctor) {
+  shared_ptr<test_object> p(new test_object(42));
+  int x;
+  shared_ptr<int> q(std::move(p), &x);
+  EXPECT_EQ(0, p.use_count());
+  EXPECT_EQ(1, q.use_count());
+  EXPECT_EQ(&x, q.get());
+}
+
+TEST_F(shared_ptr_test, aliasing_move_ctor_nullptr_non_empty) {
+  shared_ptr<test_object> p(new test_object(42));
+  shared_ptr<int> q(std::move(p), nullptr);
+  EXPECT_EQ(0, p.use_count());
+  EXPECT_EQ(1, q.use_count());
+  EXPECT_EQ(nullptr, q.get());
+}
+
+TEST_F(shared_ptr_test, copy_ctor_const) {
   shared_ptr<test_object> p(new test_object(42));
   shared_ptr<const test_object> q = p;
   EXPECT_EQ(42, *q);
 }
 
-TEST_F(shared_ptr_test, conversions_inheritance) {
-  struct base {};
+TEST_F(shared_ptr_test, move_ctor_const) {
+  shared_ptr<test_object> p(new test_object(42));
+  shared_ptr<const test_object> q = std::move(p);
+  EXPECT_EQ(42, *q);
+  EXPECT_FALSE(static_cast<bool>(p));
+}
 
-  struct derived : base {};
+TEST_F(shared_ptr_test, copy_assignment_operator_const) {
+  shared_ptr<test_object> p(new test_object(42));
+  shared_ptr<const test_object> q(new test_object(43));
+  q = p;
+  EXPECT_EQ(42, *q);
+  EXPECT_EQ(42, *p);
+}
 
-  shared_ptr<derived> d(new derived());
-  shared_ptr<base> b = d;
-  EXPECT_EQ(d.get(), b.get());
+TEST_F(shared_ptr_test, copy_assignment_operator_const_to_nullptr) {
+  shared_ptr<test_object> p(new test_object(42));
+  shared_ptr<const test_object> q;
+  q = p;
+  EXPECT_EQ(42, *q);
+  EXPECT_EQ(42, *p);
+}
+
+TEST_F(shared_ptr_test, copy_assignment_operator_const_from_nullptr) {
+  shared_ptr<test_object> p;
+  shared_ptr<const test_object> q(new test_object(43));
+  q = p;
+  EXPECT_FALSE(static_cast<bool>(q));
+  EXPECT_FALSE(static_cast<bool>(p));
+}
+
+TEST_F(shared_ptr_test, move_assignment_operator_const) {
+  shared_ptr<test_object> p(new test_object(42));
+  shared_ptr<const test_object> q(new test_object(43));
+  q = std::move(p);
+  EXPECT_EQ(42, *q);
+  EXPECT_FALSE(static_cast<bool>(p));
+}
+
+TEST_F(shared_ptr_test, move_assignment_operator_const_to_nullptr) {
+  shared_ptr<test_object> p(new test_object(42));
+  shared_ptr<const test_object> q;
+  q = std::move(p);
+  EXPECT_EQ(42, *q);
+  EXPECT_FALSE(static_cast<bool>(p));
+}
+
+TEST_F(shared_ptr_test, move_assignment_operator_const_from_nullptr) {
+  shared_ptr<test_object> p;
+  shared_ptr<const test_object> q(new test_object(43));
+  q = std::move(p);
+  EXPECT_FALSE(static_cast<bool>(q));
+  EXPECT_FALSE(static_cast<bool>(p));
+}
+
+TEST_F(shared_ptr_test, copy_ctor_inheritance) {
+  bool deleted = false;
+  {
+    destruction_tracker* ptr = new destruction_tracker(&deleted);
+    shared_ptr<destruction_tracker> d(ptr);
+    {
+      shared_ptr<destruction_tracker_base> b = d;
+      EXPECT_EQ(ptr, b.get());
+      EXPECT_EQ(ptr, d.get());
+    }
+    EXPECT_FALSE(deleted);
+  }
+  EXPECT_TRUE(deleted);
+}
+
+TEST_F(shared_ptr_test, move_ctor_inheritance) {
+  bool deleted = false;
+  {
+    destruction_tracker* ptr = new destruction_tracker(&deleted);
+    shared_ptr<destruction_tracker> d(ptr);
+    {
+      shared_ptr<destruction_tracker_base> b = std::move(d);
+      EXPECT_EQ(ptr, b.get());
+      EXPECT_FALSE(static_cast<bool>(d));
+    }
+    EXPECT_TRUE(deleted);
+    deleted = false;
+  }
+  EXPECT_FALSE(deleted);
+}
+
+TEST_F(shared_ptr_test, copy_assignment_operator_inheritance) {
+  bool deleted = false;
+  {
+    destruction_tracker* ptr = new destruction_tracker(&deleted);
+    shared_ptr<destruction_tracker> d(ptr);
+    {
+      shared_ptr<destruction_tracker_base> b(new destruction_tracker_base());
+      b = d;
+      EXPECT_EQ(ptr, b.get());
+      EXPECT_EQ(ptr, d.get());
+    }
+    EXPECT_FALSE(deleted);
+  }
+  EXPECT_TRUE(deleted);
+}
+
+TEST_F(shared_ptr_test, move_assignment_operator_inheritance) {
+  bool deleted = false;
+  {
+    destruction_tracker* ptr = new destruction_tracker(&deleted);
+    shared_ptr<destruction_tracker> d(ptr);
+    {
+      shared_ptr<destruction_tracker_base> b(new destruction_tracker_base());
+      b = std::move(d);
+      EXPECT_EQ(ptr, b.get());
+      EXPECT_FALSE(static_cast<bool>(d));
+    }
+    EXPECT_TRUE(deleted);
+    deleted = false;
+  }
+  EXPECT_FALSE(deleted);
 }
 
 TEST_F(shared_ptr_test, equivalence) {
