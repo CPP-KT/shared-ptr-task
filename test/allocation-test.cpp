@@ -162,6 +162,16 @@ void* operator new[](std::size_t count) {
   return injected_allocate(count);
 }
 
+void* operator new(std::size_t count, const std::nothrow_t&) noexcept {
+  fault_injection_disable dg;
+  return injected_allocate(count);
+}
+
+void* operator new[](std::size_t count, const std::nothrow_t&) noexcept {
+  fault_injection_disable dg;
+  return injected_allocate(count);
+}
+
 void operator delete(void* ptr) noexcept {
   injected_deallocate(ptr);
 }
