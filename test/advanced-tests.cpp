@@ -49,11 +49,15 @@ TEST(shared_ptr_testing, weak_ptr_copy_ctor) {
   shared_ptr<test_object> p(new test_object(42));
   weak_ptr<test_object> q = p;
   weak_ptr<test_object> r = q;
+  EXPECT_TRUE(r.lock() == p);
+  EXPECT_TRUE(q.lock() == p);
 }
 
 TEST(shared_ptr_testing, weak_ptr_copy_ctor_nullptr) {
   weak_ptr<test_object> p;
   weak_ptr<test_object> q = p;
+  EXPECT_FALSE(static_cast<bool>(p.lock()));
+  EXPECT_FALSE(static_cast<bool>(q.lock()));
 }
 
 TEST(shared_ptr_testing, weak_ptr_move_ctor) {
@@ -61,13 +65,15 @@ TEST(shared_ptr_testing, weak_ptr_move_ctor) {
   shared_ptr<test_object> p(new test_object(42));
   weak_ptr<test_object> q = p;
   weak_ptr<test_object> r = std::move(q);
-  shared_ptr<test_object> s = r.lock();
-  EXPECT_TRUE(p == s);
+  EXPECT_TRUE(r.lock() == p);
+  EXPECT_FALSE(static_cast<bool>(q.lock()));
 }
 
 TEST(shared_ptr_testing, weak_ptr_move_ctor_nullptr) {
   weak_ptr<test_object> p;
   weak_ptr<test_object> q = p;
+  EXPECT_FALSE(static_cast<bool>(p.lock()));
+  EXPECT_FALSE(static_cast<bool>(q.lock()));
 }
 
 TEST(shared_ptr_testing, weak_ptr_assignment_operator) {
