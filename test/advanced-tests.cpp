@@ -142,6 +142,29 @@ TEST(shared_ptr_testing, weak_ptr_assignment_operator_self_nullptr) {
   EXPECT_FALSE(static_cast<bool>(q.lock()));
 }
 
+TEST(shared_ptr_testing, weak_ptr_assignment_operator_shared) {
+  test_object::no_new_instances_guard g;
+  shared_ptr<test_object> p1(new test_object(42));
+  shared_ptr<test_object> p2(new test_object(43));
+  weak_ptr<test_object> q = p1;
+
+  q = p2;
+
+  EXPECT_TRUE(q.lock() == p2);
+}
+
+TEST(shared_ptr_testing, weak_ptr_assignment_operator_shared_aliased) {
+  test_object::no_new_instances_guard g;
+  test_object x(43);
+  shared_ptr<test_object> p1(new test_object(42));
+  shared_ptr<test_object> p2(p1, &x);
+  weak_ptr<test_object> q = p1;
+
+  q = p2;
+
+  EXPECT_TRUE(q.lock() == p2);
+}
+
 TEST(shared_ptr_testing, weak_ptr_move_assignment_operator) {
   test_object::no_new_instances_guard g;
   shared_ptr<test_object> p1(new test_object(42));
