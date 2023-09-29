@@ -289,3 +289,40 @@ TEST(shared_ptr_testing, conversions_inheritance) {
   shared_ptr<base> b = d;
   EXPECT_EQ(d.get(), b.get());
 }
+
+TEST(shared_ptr_testing, equivalence) {
+  test_object::no_new_instances_guard g;
+  shared_ptr<test_object> p1(new test_object(42));
+  shared_ptr<test_object> p2(new test_object(43));
+
+  EXPECT_FALSE(p1 == p2);
+  EXPECT_TRUE(p1 != p2);
+}
+
+TEST(shared_ptr_testing, equivalence_aliasing) {
+  test_object::no_new_instances_guard g;
+  shared_ptr<test_object> p1(new test_object(42));
+  shared_ptr<test_object> p2(new test_object(43));
+  shared_ptr<test_object> q1(p2, p1.get());
+  shared_ptr<test_object> q2(p1, p2.get());
+
+  EXPECT_TRUE(p1 == q1);
+  EXPECT_FALSE(p1 != q1);
+
+  EXPECT_TRUE(p2 == q2);
+  EXPECT_FALSE(p2 != q2);
+
+  EXPECT_FALSE(p1 == q2);
+  EXPECT_TRUE(p1 != q2);
+
+  EXPECT_FALSE(p2 == q1);
+  EXPECT_TRUE(p2 != q1);
+}
+
+TEST(shared_ptr_testing, equivalence_self) {
+  test_object::no_new_instances_guard g;
+  shared_ptr<test_object> p(new test_object(42));
+
+  EXPECT_TRUE(p == p);
+  EXPECT_FALSE(p != p);
+}
