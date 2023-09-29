@@ -217,6 +217,21 @@ TEST_F(shared_ptr_test, make_shared) {
   EXPECT_EQ(42, *p);
 }
 
+TEST_F(shared_ptr_test, make_shared_forwarding) {
+  struct pair {
+    pair(int& x, double&& y) : x(x), y(y) {}
+
+    int& x;
+    double y;
+  };
+
+  int x = 42;
+  shared_ptr<pair> p = make_shared<pair>(x, 3.14);
+  EXPECT_EQ(p->x, 42);
+  EXPECT_EQ(&p->x, &x);
+  EXPECT_EQ(p->y, 3.14);
+}
+
 TEST_F(shared_ptr_test, make_shared_weak_ptr) {
   weak_ptr<test_object> p;
   {
