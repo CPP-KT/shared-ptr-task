@@ -40,6 +40,9 @@ struct fault_injection_allocator {
 
   fault_injection_allocator() = default;
 
+  template <typename U>
+  constexpr fault_injection_allocator(const fault_injection_allocator<U>&) noexcept {}
+
   T* allocate(size_t count) {
     return static_cast<T*>(injected_allocate(count * sizeof(T)));
   }
