@@ -249,9 +249,9 @@ TEST(allocation_calls_test, make_shared_allocations) {
 TEST(fault_injection_test, pointer_ctor) {
   faulty_run([] {
     bool deleted = false;
-    destruction_tracker* i_p = new destruction_tracker(&deleted);
+    destruction_tracker* ptr = new destruction_tracker(&deleted);
     try {
-      shared_ptr<destruction_tracker> s_p(i_p);
+      shared_ptr<destruction_tracker> sp(ptr);
     } catch (...) {
       fault_injection_disable dg;
       EXPECT_TRUE(deleted);
@@ -263,12 +263,54 @@ TEST(fault_injection_test, pointer_ctor) {
 TEST(fault_injection_test, pointer_ctor_with_custom_deleter) {
   faulty_run([] {
     bool deleted = false;
-    int* i_p = new int(42);
+    int* ptr = new int(42);
     try {
-      shared_ptr<int> s_p(i_p, tracking_deleter<int>(&deleted));
+      shared_ptr<int> sp(ptr, tracking_deleter<int>(&deleted));
     } catch (...) {
       fault_injection_disable dg;
       EXPECT_TRUE(deleted);
+      throw;
+    }
+  });
+}
+
+TEST(fault_injection_test, reset_ptr) {
+  faulty_run([] {
+    bool deleted1 = false;
+    bool deleted2 = false;
+    ::disabled = true;
+    destruction_tracker* ptr1 = new destruction_tracker(&deleted1);
+    destruction_tracker* ptr2 = new destruction_tracker(&deleted2);
+    shared_ptr<destruction_tracker> sp(ptr1);
+    ::disabled = false;
+    try {
+      sp.reset(ptr2);
+    } catch (...) {
+      fault_injection_disable dg;
+      EXPECT_TRUE(deleted2);
+      EXPECT_FALSE(deleted1);
+      EXPECT_TRUE(sp.get() == ptr1);
+      throw;
+    }
+  });
+}
+
+TEST(fault_injection_test, reset_ptr_with_custom_deleter) {
+  faulty_run([] {
+    bool deleted1 = false;
+    bool deleted2 = false;
+    ::disabled = true;
+    int* ptr1 = new int(42);
+    int* ptr2 = new int(43);
+    shared_ptr<int> sp(ptr1, tracking_deleter<int>(&deleted1));
+    ::disabled = false;
+    try {
+      sp.reset(ptr2, tracking_deleter<int>(&deleted2));
+    } catch (...) {
+      fault_injection_disable dg;
+      EXPECT_TRUE(deleted2);
+      EXPECT_FALSE(deleted1);
+      EXPECT_TRUE(sp.get() == ptr1);
       throw;
     }
   });
