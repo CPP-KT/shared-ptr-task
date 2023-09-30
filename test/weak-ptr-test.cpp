@@ -30,6 +30,15 @@ TEST_F(weak_ptr_test, lock_nullptr_2) {
   EXPECT_FALSE(static_cast<bool>(q.lock()));
 }
 
+TEST_F(weak_ptr_test, use_count) {
+  shared_ptr<test_object> p1(new test_object(42));
+  shared_ptr<test_object> p2 = p1;
+  weak_ptr<test_object> q = p2;
+
+  EXPECT_EQ(2, p1.use_count());
+  EXPECT_EQ(3, q.lock().use_count());
+}
+
 TEST_F(weak_ptr_test, reset) {
   shared_ptr<test_object> p(new test_object(42));
   weak_ptr<test_object> q1 = p;
