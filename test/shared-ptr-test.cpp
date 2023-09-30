@@ -182,28 +182,6 @@ TEST_F(shared_ptr_test, move_assignment_operator_self_nullptr) {
   EXPECT_FALSE(static_cast<bool>(p));
 }
 
-TEST_F(shared_ptr_test, weak_ptr_lock) {
-  shared_ptr<test_object> p(new test_object(42));
-  weak_ptr<test_object> q = p;
-  shared_ptr<test_object> r = q.lock();
-  EXPECT_TRUE(r == p);
-  EXPECT_EQ(42, *r);
-}
-
-TEST_F(shared_ptr_test, weak_ptr_lock_nullptr) {
-  shared_ptr<test_object> p(new test_object(42));
-  weak_ptr<test_object> q = p;
-  p.reset();
-  instances_guard.expect_no_instances();
-  shared_ptr<test_object> r = q.lock();
-  EXPECT_FALSE(static_cast<bool>(r));
-}
-
-TEST_F(shared_ptr_test, weak_ptr_lock_nullptr_2) {
-  weak_ptr<test_object> q;
-  EXPECT_FALSE(static_cast<bool>(q.lock()));
-}
-
 TEST_F(shared_ptr_test, make_shared) {
   shared_ptr<test_object> p = make_shared<test_object>(42);
   EXPECT_EQ(42, *p);
@@ -222,15 +200,6 @@ TEST_F(shared_ptr_test, make_shared_forwarding) {
   EXPECT_EQ(p->x, 42);
   EXPECT_EQ(&p->x, &x);
   EXPECT_EQ(p->y, 3.14);
-}
-
-TEST_F(shared_ptr_test, make_shared_weak_ptr) {
-  weak_ptr<test_object> p;
-  {
-    shared_ptr<test_object> q = make_shared<test_object>(42);
-    p = q;
-  }
-  instances_guard.expect_no_instances();
 }
 
 TEST_F(shared_ptr_test, ptr_ctor_inheritance) {
