@@ -255,6 +255,7 @@ TEST_F(shared_ptr_test, aliasing_move_ctor) {
   shared_ptr<int> q(std::move(p), &x);
   EXPECT_EQ(0, p.use_count());
   EXPECT_EQ(1, q.use_count());
+  EXPECT_EQ(nullptr, p.get());
   EXPECT_EQ(&x, q.get());
 }
 
@@ -263,6 +264,7 @@ TEST_F(shared_ptr_test, aliasing_move_ctor_nullptr_non_empty) {
   shared_ptr<int> q(std::move(p), nullptr);
   EXPECT_EQ(0, p.use_count());
   EXPECT_EQ(1, q.use_count());
+  EXPECT_EQ(nullptr, p.get());
   EXPECT_EQ(nullptr, q.get());
 }
 
