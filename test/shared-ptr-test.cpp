@@ -224,7 +224,7 @@ TEST_F(shared_ptr_test, custom_deleter) {
 }
 
 TEST_F(shared_ptr_test, custom_deleter_reset) {
-  bool deleted;
+  bool deleted = false;
   {
     shared_ptr<test_object> p;
     p.reset(new test_object(42), tracking_deleter<test_object>(&deleted));
