@@ -4,6 +4,8 @@
 
 #include <gtest/gtest.h>
 
+#include <string>
+
 class shared_ptr_test : public ::testing::Test {
 protected:
   test_object::no_new_instances_guard instances_guard;
@@ -234,8 +236,8 @@ TEST_F(shared_ptr_test, custom_deleter_reset) {
 
 TEST_F(shared_ptr_test, aliasing_ctor) {
   shared_ptr<test_object> p(new test_object(42));
-  int x;
-  shared_ptr<int> q(p, &x);
+  std::string x;
+  shared_ptr<std::string> q(p, &x);
   EXPECT_EQ(2, p.use_count());
   EXPECT_EQ(2, q.use_count());
   EXPECT_EQ(&x, q.get());
@@ -243,7 +245,7 @@ TEST_F(shared_ptr_test, aliasing_ctor) {
 
 TEST_F(shared_ptr_test, aliasing_ctor_nullptr_non_empty) {
   shared_ptr<test_object> p(new test_object(42));
-  shared_ptr<int> q(p, nullptr);
+  shared_ptr<std::string> q(p, nullptr);
   EXPECT_EQ(2, p.use_count());
   EXPECT_EQ(2, q.use_count());
   EXPECT_EQ(nullptr, q.get());
@@ -251,8 +253,8 @@ TEST_F(shared_ptr_test, aliasing_ctor_nullptr_non_empty) {
 
 TEST_F(shared_ptr_test, aliasing_move_ctor) {
   shared_ptr<test_object> p(new test_object(42));
-  int x;
-  shared_ptr<int> q(std::move(p), &x);
+  std::string x;
+  shared_ptr<std::string> q(std::move(p), &x);
   EXPECT_EQ(0, p.use_count());
   EXPECT_EQ(1, q.use_count());
   EXPECT_EQ(nullptr, p.get());
@@ -261,7 +263,7 @@ TEST_F(shared_ptr_test, aliasing_move_ctor) {
 
 TEST_F(shared_ptr_test, aliasing_move_ctor_nullptr_non_empty) {
   shared_ptr<test_object> p(new test_object(42));
-  shared_ptr<int> q(std::move(p), nullptr);
+  shared_ptr<std::string> q(std::move(p), nullptr);
   EXPECT_EQ(0, p.use_count());
   EXPECT_EQ(1, q.use_count());
   EXPECT_EQ(nullptr, p.get());
