@@ -245,7 +245,14 @@ TEST_F(weak_ptr_test, move_assignment_operator_self_nullptr) {
 
 namespace {
 
-struct base {};
+struct base {
+  base() = default;
+
+  base(const base&) = delete;
+  base& operator=(const base&) = delete;
+  base(base&&) = delete;
+  base& operator=(base&&) = delete;
+};
 
 struct derived : base {};
 
