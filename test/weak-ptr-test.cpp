@@ -3,6 +3,8 @@
 
 #include <gtest/gtest.h>
 
+#include <string>
+
 class weak_ptr_test : public ::testing::Test {
 protected:
   test_object::no_new_instances_guard instances_guard;
@@ -16,18 +18,30 @@ TEST_F(weak_ptr_test, lock) {
   EXPECT_EQ(42, *r);
 }
 
-TEST_F(weak_ptr_test, lock_nullptr) {
+TEST_F(weak_ptr_test, lock_default_constructed) {
+  weak_ptr<test_object> q;
+  EXPECT_FALSE(static_cast<bool>(q.lock()));
+}
+
+TEST_F(weak_ptr_test, lock_expired) {
   shared_ptr<test_object> p(new test_object(42));
+
   weak_ptr<test_object> q = p;
   p.reset();
   instances_guard.expect_no_instances();
+
   shared_ptr<test_object> r = q.lock();
   EXPECT_FALSE(static_cast<bool>(r));
 }
 
-TEST_F(weak_ptr_test, lock_nullptr_2) {
-  weak_ptr<test_object> q;
-  EXPECT_FALSE(static_cast<bool>(q.lock()));
+TEST_F(weak_ptr_test, lock_empty_nonnull) {
+  shared_ptr<test_object> p;
+
+  std::string x;
+  shared_ptr<std::string> q(p, &x);
+
+  weak_ptr<std::string> r = q;
+  EXPECT_FALSE(static_cast<bool>(r.lock()));
 }
 
 TEST_F(weak_ptr_test, use_count) {
