@@ -4,7 +4,13 @@
 
 template <typename T>
 struct tracking_deleter {
-  explicit tracking_deleter(bool* deleted) : deleted(deleted) {}
+  explicit tracking_deleter(bool* deleted, bool* copied) : deleted(deleted), copied(copied) {}
+
+  tracking_deleter(tracking_deleter&& other) = default;
+
+  tracking_deleter(const tracking_deleter& other) : deleted(other.deleted), copied(other.copied) {
+    *copied = true;
+  }
 
   void operator()(T* object) {
     *deleted = true;
@@ -13,6 +19,7 @@ struct tracking_deleter {
 
 private:
   bool* deleted;
+  bool* copied;
 };
 
 struct destruction_tracker_base {

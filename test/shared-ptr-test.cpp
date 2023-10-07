@@ -221,17 +221,21 @@ TEST_F(shared_ptr_test, reset_ptr_inheritance) {
 
 TEST_F(shared_ptr_test, custom_deleter) {
   bool deleted = false;
-  { shared_ptr<test_object> p(new test_object(42), tracking_deleter<test_object>(&deleted)); }
+  bool copied = false;
+  { shared_ptr<test_object> p(new test_object(42), tracking_deleter<test_object>(&deleted, &copied)); }
   EXPECT_TRUE(deleted);
+  EXPECT_FALSE(copied);
 }
 
 TEST_F(shared_ptr_test, custom_deleter_reset) {
   bool deleted = false;
+  bool copied = false;
   {
     shared_ptr<test_object> p;
-    p.reset(new test_object(42), tracking_deleter<test_object>(&deleted));
+    p.reset(new test_object(42), tracking_deleter<test_object>(&deleted, &copied));
   }
   EXPECT_TRUE(deleted);
+  EXPECT_FALSE(copied);
 }
 
 TEST_F(shared_ptr_test, aliasing_ctor) {
