@@ -6,6 +6,9 @@ template <typename T>
 struct tracking_deleter {
   explicit tracking_deleter(bool* deleted) : deleted(deleted) {}
 
+  tracking_deleter(const tracking_deleter&) = delete;
+  tracking_deleter(tracking_deleter&&) = default;
+
   void operator()(T* object) {
     *deleted = true;
     delete object;
