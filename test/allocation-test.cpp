@@ -147,7 +147,8 @@ void faulty_run(const std::function<void()>& f) {
   context = nullptr;
 }
 
-fault_injection_disable::fault_injection_disable() : was_disabled(disabled) {
+fault_injection_disable::fault_injection_disable()
+    : was_disabled(disabled) {
   disabled = true;
 }
 
@@ -321,7 +322,8 @@ TEST(fault_injection_test, reset_ptr_with_custom_deleter) {
 
 TEST(fault_injection_test, make_shared) {
   struct test_object {
-    explicit test_object(int value) : value(value) {
+    explicit test_object(int value)
+        : value(value) {
       fault_injection_point();
     }
 

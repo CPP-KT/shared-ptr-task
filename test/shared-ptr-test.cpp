@@ -191,7 +191,9 @@ TEST_F(shared_ptr_test, make_shared) {
 
 TEST_F(shared_ptr_test, make_shared_forwarding) {
   struct pair {
-    pair(int& x, double&& y) : x(x), y(y) {}
+    pair(int& x, double&& y)
+        : x(x)
+        , y(y) {}
 
     int& x;
     double y;

@@ -273,7 +273,6 @@ struct derived : base {};
 } // namespace
 
 TEST_F(weak_ptr_test, shared_ctor_inheritance) {
-
   shared_ptr<derived> p(new derived());
   weak_ptr<base> q = p;
 

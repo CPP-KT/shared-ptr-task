@@ -4,7 +4,8 @@
 
 template <typename T>
 struct tracking_deleter {
-  explicit tracking_deleter(bool* deleted) : deleted(deleted) {}
+  explicit tracking_deleter(bool* deleted)
+      : deleted(deleted) {}
 
   tracking_deleter(const tracking_deleter&) = delete;
   tracking_deleter(tracking_deleter&&) = default;
@@ -29,7 +30,8 @@ struct destruction_tracker_base {
 };
 
 struct destruction_tracker : destruction_tracker_base {
-  explicit destruction_tracker(bool* deleted) : deleted(deleted) {}
+  explicit destruction_tracker(bool* deleted)
+      : deleted(deleted) {}
 
   ~destruction_tracker() {
     *deleted = true;
