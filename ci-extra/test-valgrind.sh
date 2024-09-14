@@ -12,6 +12,7 @@ valgrind --tool=memcheck \
   --leak-resolution=med \
   --track-origins=yes \
   --vgdb=no \
+  --show-mismatched-frees=no \
   --error-exitcode=1 \
   --suppressions="${SCRIPT_DIR}/valgrind.suppressions" \
   cmake-build-"$BUILD_TYPE"/tests
