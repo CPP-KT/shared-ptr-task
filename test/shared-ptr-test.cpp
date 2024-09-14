@@ -236,6 +236,25 @@ TEST_F(shared_ptr_test, custom_deleter_reset) {
   EXPECT_TRUE(deleted);
 }
 
+TEST_F(shared_ptr_test, inheritance_convertible) {
+  using base = shared_ptr<destruction_tracker_base>;
+  using const_base = shared_ptr<const destruction_tracker_base>;
+  using derived = shared_ptr<destruction_tracker>;
+  using const_derived = shared_ptr<const destruction_tracker>;
+
+  EXPECT_TRUE((std::is_convertible_v<const derived&, base>) );
+  EXPECT_TRUE(!(std::is_convertible_v<const base&, derived>) );
+
+  EXPECT_TRUE((std::is_convertible_v<const const_derived&, const_base>) );
+  EXPECT_TRUE(!(std::is_convertible_v<const const_base&, const_derived>) );
+
+  EXPECT_TRUE((std::is_convertible_v<const derived&, const_base>) );
+  EXPECT_TRUE(!(std::is_convertible_v<const base&, const_derived>) );
+
+  EXPECT_TRUE(!(std::is_convertible_v<const const_derived&, base>) );
+  EXPECT_TRUE(!(std::is_convertible_v<const const_base&, derived>) );
+}
+
 TEST_F(shared_ptr_test, aliasing_ctor) {
   shared_ptr<test_object> p(new test_object(42));
   std::string x;
