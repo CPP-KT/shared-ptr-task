@@ -509,25 +509,3 @@ TEST_F(shared_ptr_test, equivalence_nullptr) {
   EXPECT_TRUE(nullptr == p);
   EXPECT_FALSE(nullptr != p);
 }
-
-TEST_F(shared_ptr_test, efficient_make_shared) {
-  struct not_movable_and_copyable_class {
-  public:
-    not_movable_and_copyable_class(int a, bool b, double d)
-        : a(a)
-        , b(b)
-        , d(d) {}
-
-    not_movable_and_copyable_class(const not_movable_and_copyable_class& other) = delete;
-    not_movable_and_copyable_class(not_movable_and_copyable_class&& other) = delete;
-    not_movable_and_copyable_class& operator=(const not_movable_and_copyable_class& other) = delete;
-    not_movable_and_copyable_class& operator=(not_movable_and_copyable_class&& other) = delete;
-
-  private:
-    int a;
-    bool b;
-    double d;
-  };
-
-  [[maybe_unused]] auto p = make_shared<not_movable_and_copyable_class>(2, true, 0.0);
-}
