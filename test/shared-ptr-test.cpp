@@ -529,5 +529,5 @@ TEST_F(shared_ptr_test, make_shared_non_movable) {
 
   auto p = make_shared<non_movable_non_copyable>("don't look here", 0.0);
   EXPECT_EQ("don't look here", p->str);
-  EXPECT_FLOAT_EQ(0.0, p->d);
+  EXPECT_EQ(0.0, p->d);
 }
