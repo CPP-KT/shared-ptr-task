@@ -259,6 +259,19 @@ TEST_F(shared_ptr_test, custom_deleter_function_pointer) {
   EXPECT_TRUE(deleted);
 }
 
+TEST_F(shared_ptr_test, custom_deleter_lvalue) {
+  thread_local bool deleted;
+  deleted = false;
+  {
+    auto deleter = [](test_object* ptr) {
+      deleted = true;
+      delete ptr;
+    };
+    shared_ptr<test_object> p(new test_object(42), deleter);
+  }
+  EXPECT_TRUE(deleted);
+}
+
 TEST_F(shared_ptr_test, inheritance_convertible) {
   using base = shared_ptr<destruction_tracker_base>;
   using const_base = shared_ptr<const destruction_tracker_base>;
