@@ -31,7 +31,7 @@ jobs:
       fail-fast: false
       matrix:
         toolchain:
-          - { name: Linux/GCC,   os: ubuntu-22.04, compiler: gcc-13 }
+          - { name: Linux/GCC,   os: ubuntu-22.04, compiler: gcc-14 }
           - { name: Linux/Clang, os: ubuntu-22.04, compiler: clang-18 }
         build_type:
           - Release
